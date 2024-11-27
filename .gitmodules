@@ -1,0 +1,6 @@
+[submodule "lib/usdc-token"]
+	path = lib/usdc-token
+	url = https://github.com/circlefin/stablecoin-evm/
+[submodule "lib/era-contracts"]
+	path = lib/era-contracts
+	url = https://github.com/matter-labs/era-contracts-private.git
