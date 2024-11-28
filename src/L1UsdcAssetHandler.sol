@@ -5,10 +5,11 @@ pragma solidity 0.8.24;
 import {IERC20} from "@openzeppelin/contracts-v4/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v4/token/ERC20/utils/SafeERC20.sol";
 
-import {IL1AssetHandler} from "../interfaces/IL1AssetHandler.sol";
+import {IL1AssetHandler} from "l1-contracts/contracts/bridge/interfaces/IL1AssetHandler.sol";
+import {AssetIdNotSupported, InsufficientChainBalance, NoFundsTransferred} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+
 import {UsdcAssetHandlerBase} from "./UsdcAssetHandlerBase.sol";
 
-import {AssetIdNotSupported, InsufficientChainBalance, NoFundsTransferred} from "../../common/L1ContractErrors.sol";
 
 /// @author Matter Labs
 /// @custom:security-contact security@matterlabs.dev

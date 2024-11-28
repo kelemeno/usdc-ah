@@ -1,3 +1,16 @@
+# USDC Asset Handler
+
+git submodule init
+git submodule update --init --recursive
+
+cd lib/usdc-token
+yarn set version 1.22.19
+yarn
+yarn install
+
+cd lib/era-contracts
+yarn 
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**

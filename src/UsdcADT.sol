@@ -4,11 +4,11 @@ pragma solidity 0.8.24;
 
 import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable-v4/access/Ownable2StepUpgradeable.sol";
 
-import {IL1AssetDeploymentTracker} from "../interfaces/IL1AssetDeploymentTracker.sol";
-import {IAssetRouterBase} from "../asset-router/IAssetRouterBase.sol";
-import {DataEncoding} from "../../common/libraries/DataEncoding.sol";
+import {IL1AssetDeploymentTracker} from "l1-contracts/contracts/bridge/interfaces/IL1AssetDeploymentTracker.sol";
+import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
+import {DataEncoding} from "l1-contracts/contracts/common/libraries/DataEncoding.sol";
 
-import {WrongCounterpart} from "../L1BridgeContractErrors.sol";
+import {WrongCounterpart} from "l1-contracts/contracts/bridge/L1BridgeContractErrors.sol";
 
 /// @author Matter Labs
 /// @custom:security-contact security@matterlabs.dev

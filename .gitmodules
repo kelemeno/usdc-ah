@@ -3,6 +3,7 @@
 	url = https://github.com/circlefin/stablecoin-evm/
 [submodule "lib/era-contracts"]
 	path = lib/era-contracts
+	branch = kl/usdc-ah-import
 	url = https://github.com/matter-labs/era-contracts-private.git
 [submodule "lib/forge-std"]
 	path = lib/forge-std

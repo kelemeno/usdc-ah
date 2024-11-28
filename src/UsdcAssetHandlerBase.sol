@@ -7,11 +7,11 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable-v4/securi
 import {IERC20} from "@openzeppelin/contracts-v4/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v4/token/ERC20/utils/SafeERC20.sol";
 
-import {IAssetHandler} from "../interfaces/IAssetHandler.sol";
-import {IMintableToken} from "../interfaces/IMintableToken.sol";
-import {IAssetRouterBase} from "../asset-router/IAssetRouterBase.sol";
+import {IAssetHandler} from "l1-contracts/contracts/bridge/interfaces/IAssetHandler.sol";
+import {IMintableToken} from "./IMintableToken.sol";
+import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
 
-import {Unauthorized, NonEmptyMsgValue} from "../../common/L1ContractErrors.sol";
+import {Unauthorized, NonEmptyMsgValue} from "l1-contracts/contracts/common/L1ContractErrors.sol";
 
 /// @author Matter Labs
 /// @custom:security-contact security@matterlabs.dev
