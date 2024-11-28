@@ -10,4 +10,11 @@ remappings = [
     "l1-contracts/=lib/era-contracts/l1-contracts/",
 ]
 
+fs_permissions = [
+    { access = "read", path = "lib/era-contracts/" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/script-out/" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/test/foundry/l1/integration/deploy-scripts/script-config" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/test/foundry/l1/integration/deploy-scripts/script-out/" }
+]
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

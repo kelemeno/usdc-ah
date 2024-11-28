@@ -10,6 +10,10 @@ yarn install
 
 cd lib/era-contracts
 yarn 
+git submodule init
+git submodule update --init --recursive
+
+
 
 ## Foundry
 
