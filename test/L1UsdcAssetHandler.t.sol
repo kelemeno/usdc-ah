@@ -16,6 +16,9 @@ import {L2_ASSET_ROUTER_ADDR} from "lib/era-contracts/l1-contracts/contracts/com
 import {IAssetRouterBase} from "lib/era-contracts/l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
 import {IBridgehub} from "lib/era-contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 
+// import {FiatTokenV2_2} from "lib/usdc-token/contracts/v2/FiatTokenV2.sol";
+import {TestnetERC20Token} from "lib/era-contracts/l1-contracts/contracts/dev-contracts/TestnetERC20Token.sol";
+
 // see L2Erc20TestAbstract for example of structure
 contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, TokenDeployer, L2TxMocker {
     uint256 constant TEST_USERS_COUNT = 10;
@@ -24,6 +27,8 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
     bytes32 public l2TokenAssetId;
     address public tokenL1Address;
     // generate MAX_USERS addresses and append it to users array
+
+    address public usdc;
     function _generateUserAddresses() internal {
         require(users.length == 0, "Addresses already generated");
 
@@ -58,6 +63,8 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
 
     function setUp() public {
         prepare();
+        // usdc = new FiatTokenV2_2();
+        usdc = address(new TestnetERC20Token("Test", "TT", 18));
     }
 
     function depositToL1(address _tokenAddress) public {
