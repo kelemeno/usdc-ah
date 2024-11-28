@@ -11,7 +11,8 @@ import {IAssetHandler} from "l1-contracts/contracts/bridge/interfaces/IAssetHand
 import {IMintableToken} from "./IMintableToken.sol";
 import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
 
-import {Unauthorized, NonEmptyMsgValue} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+import {Unauthorized, NonEmptyMsgValue, TokensWithFeesNotSupported} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+// import {TokensWithFeesNotSupported} from "l1-contracts/contracts/bridge/L1BridgeContractErrors.sol";
 
 /// @author Matter Labs
 /// @custom:security-contact security@matterlabs.dev
@@ -26,8 +27,8 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
     /// @dev The assetId of the base token.
     bytes32 public immutable USDC_ASSET_ID;
 
-    /// @dev A mapping assetId => tokenAddress
-    address public tokenAddress;
+    /// @dev A mapping tokenAddress
+    address public immutable TOKEN_ADDRESS;
 
     bool public isNative;
 
@@ -46,13 +47,21 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         _;
     }
 
+    modifier nonpayableForced() {
+        if (msg.value != 0) {
+            revert NonEmptyMsgValue();
+        }
+        _;
+    }
+
     /// @dev Contract is expected to be used as proxy implementation.
     /// @dev Disable the initialization to prevent Parity hack.
     /// @param _assetRouter Address of assetRouter
-    constructor(address _assetRouter, bytes32 _usdcAssetId) {
+    constructor(address _assetRouter, bytes32 _usdcAssetId, address _tokenAddress) {
         _disableInitializers();
         ASSET_ROUTER = IAssetRouterBase(_assetRouter);
         USDC_ASSET_ID = _usdcAssetId;
+        TOKEN_ADDRESS = _tokenAddress;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -77,17 +86,9 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         (, receiver, amount) = _decodeBridgeMintData(_data);
 
         _handleChainBalanceDecrease(_chainId, amount);
-        _withdrawFunds(receiver, tokenAddress, amount);
+        _withdrawFunds(receiver, TOKEN_ADDRESS, amount);
         // solhint-disable-next-line func-named-parameters
         emit BridgeMint(_chainId, _assetId, receiver, amount);
-    }
-
-    function _withdrawFunds(address _to, address _token, uint256 _amount) internal {
-        if (isNative) {
-            IERC20(_token).safeTransfer(_to, _amount);
-        } else {
-            IMintableToken(_token).mint(_to, _amount);
-        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -103,23 +104,18 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         bytes32 _assetId,
         address _originalCaller,
         bytes calldata _data
-    ) external payable override onlyAssetRouter whenNotPaused returns (bytes memory _bridgeMintData) {
-        if (msg.value != 0) {
-            revert NonEmptyMsgValue();
-        }
-        (uint256 _depositAmount, address _receiver) = abi.decode(_data, (uint256, address));
+    ) external payable override nonpayableForced onlyAssetRouter whenNotPaused returns (bytes memory _bridgeMintData) {
+        (uint256 _depositAmount, address _receiver) = _decodeBridgeBurnData(_data);
+        uint256 expectedDepositAmount = _depositFunds(_originalCaller, IERC20(TOKEN_ADDRESS), _depositAmount); // note if _originalCaller is this contract, this will return 0. This does not happen.
         _handleChainBalanceIncrease(_chainId, _depositAmount);
-        uint256 expectedDepositAmount = _depositFunds(_originalCaller, IERC20(tokenAddress), _depositAmount); // note if _originalCaller is this contract, this will return 0. This does not happen.
         // The token has non-standard transfer logic
         if (_depositAmount != expectedDepositAmount) {
-            // revert TokensWithFeesNotSupported();
+            revert TokensWithFeesNotSupported();
         }
         _bridgeMintData = _encodeBridgeMintData({
             _originalCaller: _originalCaller,
             _remoteReceiver: _receiver,
-            // _originToken: nativeToken,
             _amount: _depositAmount
-            // _erc20Metadata: erc20Metadata
         });
 
         emit BridgeBurn({
@@ -146,12 +142,20 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         if (isNative) {
             IERC20(_token).safeTransferFrom(_from, address(this), _amount);
         } else {
-            IMintableToken(tokenAddress).mint(_from, _amount);
+            IMintableToken(TOKEN_ADDRESS).mint(_from, _amount);
         }
 
         uint256 balanceAfter = _token.balanceOf(address(this));
 
         return balanceAfter - balanceBefore;
+    }
+
+    function _withdrawFunds(address _to, address _token, uint256 _amount) internal {
+        if (isNative) {
+            IERC20(_token).safeTransfer(_to, _amount);
+        } else {
+            IMintableToken(_token).mint(_to, _amount);
+        }
     }
 
     function _handleChainBalanceIncrease(uint256 _chainId, uint256 _amount) internal virtual;
@@ -169,5 +173,9 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
 
     function _decodeBridgeMintData(bytes calldata _data) internal pure returns (address, address, uint256) {
         return abi.decode(_data, (address, address, uint256));
+    }
+
+    function _decodeBridgeBurnData(bytes calldata _data) internal pure returns (address, uint256) {
+        return abi.decode(_data, (address, uint256));
     }
 }

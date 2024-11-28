@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
 import {L1UsdcAssetHandler} from "../src/L1UsdcAssetHandler.sol";
+import {L1UsdcAssetDeploymentTracker} from "../src/L1UsdcAssetDeploymentTracker.sol";
 import {L1ContractDeployer, FinalizeL1DepositParams} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedL1ContractDeployer.t.sol";
 import {TokenDeployer} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedTokenDeployer.t.sol";
 import {ZKChainDeployer} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedZKChainDeployer.t.sol";
@@ -29,6 +30,10 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
     // generate MAX_USERS addresses and append it to users array
 
     address public usdc;
+    L1UsdcAssetHandler public l1AssetHandler;
+    L1UsdcAssetDeploymentTracker public deploymentTracker;
+    bytes32 public usdcAssetId;
+
     function _generateUserAddresses() internal {
         require(users.length == 0, "Addresses already generated");
 
@@ -64,7 +69,11 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
     function setUp() public {
         prepare();
         // usdc = new FiatTokenV2_2();
-        usdc = address(new TestnetERC20Token("Test", "TT", 18));
+        usdc = tokens[0];
+        address l2AssetHandler = makeAddr(string(abi.encode("l2AssetHandler")));
+        deploymentTracker = new L1UsdcAssetDeploymentTracker(address(sharedBridge), usdc, l2AssetHandler);
+        usdcAssetId = deploymentTracker.USDC_ASSET_ID();
+        l1AssetHandler = new L1UsdcAssetHandler(address(sharedBridge), usdc, usdcAssetId);
     }
 
     function depositToL1(address _tokenAddress) public {

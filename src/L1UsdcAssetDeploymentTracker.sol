@@ -14,27 +14,29 @@ import {WrongCounterpart} from "l1-contracts/contracts/bridge/L1BridgeContractEr
 /// @custom:security-contact security@matterlabs.dev
 /// @dev Vault handling bridging of USDC
 /// @dev Designed for use with a proxy for upgradability.
-contract L1USDCAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2StepUpgradeable {
+contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2StepUpgradeable {
     /// @dev L1 Shared Bridge smart contract that handles communication with its counterparts on L2s
     IAssetRouterBase public immutable ASSET_ROUTER;
 
     address public immutable L1_USDC_ADDRESS;
 
-    address public immutable ASSET_HANDLER_ON_COUNTERPART; // To be deployed at predefined address
+    bytes32 public immutable USDC_ASSET_ID;
 
-    bytes32 public usdcAssetId;
+    address public assetHandlerOnCounterpart; // To be deployed at predefined address
+
+    // bytes32 public usdcAssetId;
 
     constructor(address _assetRouter, address _usdcToken, address _assetHandlerOnCounterpart) {
         _disableInitializers();
         ASSET_ROUTER = IAssetRouterBase(_assetRouter);
         L1_USDC_ADDRESS = _usdcToken;
-        ASSET_HANDLER_ON_COUNTERPART = _assetHandlerOnCounterpart;
+        USDC_ASSET_ID = DataEncoding.encodeAssetId(block.chainid, L1_USDC_ADDRESS, address(this));
     }
 
     /// @notice Registers a native token address for the vault.
     /// @dev It does not perform any checks for the correctnesss of the token contract.
     function registerTokenOnL1() external {
-        usdcAssetId = DataEncoding.encodeAssetId(block.chainid, L1_USDC_ADDRESS, address(this));
+        USDC_ASSET_ID = DataEncoding.encodeAssetId(block.chainid, L1_USDC_ADDRESS, address(this));
         ASSET_ROUTER.setAssetHandlerAddressThisChain(bytes32(uint256(uint160(L1_USDC_ADDRESS))), address(this));
     }
 
@@ -44,7 +46,7 @@ contract L1USDCAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
         address,
         address _assetHandlerAddressOnCounterpart
     ) external view override {
-        if (_assetHandlerAddressOnCounterpart != ASSET_HANDLER_ON_COUNTERPART) {
+        if (_assetHandlerAddressOnCounterpart != assetHandlerOnCounterpart) {
             revert WrongCounterpart();
         }
     }

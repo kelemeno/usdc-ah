@@ -39,7 +39,7 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         bytes32 _usdcAssetId
     ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId) {
         _disableInitializers();
-        tokenAddress = _usdcToken;
+        TOKEN_ADDRESS = _usdcToken;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -63,7 +63,8 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
 
         _handleChainBalanceDecrease(_chainId, _amount);
 
-        IERC20(tokenAddress).safeTransfer(_depositSender, _amount);
+        // we know USDC is native on L1.
+        IERC20(TOKEN_ADDRESS).safeTransfer(_depositSender, _amount);
     }
 
     /*//////////////////////////////////////////////////////////////
