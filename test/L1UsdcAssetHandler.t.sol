@@ -8,7 +8,7 @@ import {L1ContractDeployer, FinalizeL1DepositParams} from "lib/era-contracts/l1-
 import {TokenDeployer} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedTokenDeployer.t.sol";
 import {ZKChainDeployer} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedZKChainDeployer.t.sol";
 import {L2TxMocker} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/_SharedL2TxMocker.t.sol";
-import {IL1Nullifier} from "lib/era-contracts/l1-contracts/contracts/bridge/interfaces/IL1Nullifier.sol";
+// import {IL1Nullifier} from "lib/era-contracts/l1-contracts/contracts/bridge/interfaces/IL1Nullifier.sol";
 // import {FinalizeL1DepositParams} from "lib/era-contracts/l1-contracts/contracts/bridge/L1Nullifier.sol";
 import {DataEncoding} from "lib/era-contracts/l1-contracts/contracts/common/libraries/DataEncoding.sol";
 import {BridgeHelper} from "lib/era-contracts/l1-contracts/contracts/bridge/BridgeHelper.sol";
@@ -18,11 +18,11 @@ import {IAssetRouterBase} from "lib/era-contracts/l1-contracts/contracts/bridge/
 import {IBridgehub} from "lib/era-contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 
 // import {FiatTokenV2_2} from "lib/usdc-token/contracts/v2/FiatTokenV2.sol";
-import {TestnetERC20Token} from "lib/era-contracts/l1-contracts/contracts/dev-contracts/TestnetERC20Token.sol";
+// import {TestnetERC20Token} from "lib/era-contracts/l1-contracts/contracts/dev-contracts/TestnetERC20Token.sol";
 
 // see L2Erc20TestAbstract for example of structure
 contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, TokenDeployer, L2TxMocker {
-    uint256 constant TEST_USERS_COUNT = 10;
+    uint256 constant public TEST_USERS_COUNT = 10;
     address[] public users;
     address[] public l2ContractAddresses;
     bytes32 public l2TokenAssetId;
@@ -37,7 +37,7 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
     function _generateUserAddresses() internal {
         require(users.length == 0, "Addresses already generated");
 
-        for (uint256 i = 0; i < TEST_USERS_COUNT; i++) {
+        for (uint256 i = 0; i < TEST_USERS_COUNT; ++i) {
             address newAddress = makeAddr(string(abi.encode("account", i)));
             users.push(newAddress);
         }
@@ -58,7 +58,7 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
         // _deployHyperchain(tokens[1]);
         // _deployHyperchain(tokens[1]);
 
-        for (uint256 i = 0; i < zkChainIds.length; i++) {
+        for (uint256 i = 0; i < zkChainIds.length; ++i) {
             address contractAddress = makeAddr(string(abi.encode("contract", i)));
             l2ContractAddresses.push(contractAddress);
 
@@ -71,7 +71,7 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
         // usdc = new FiatTokenV2_2();
         usdc = tokens[0];
         address l2AssetHandler = makeAddr(string(abi.encode("l2AssetHandler")));
-        deploymentTracker = new L1UsdcAssetDeploymentTracker(address(bridgehub), address(sharedBridge), usdc, l2AssetHandler);
+        deploymentTracker = new L1UsdcAssetDeploymentTracker(address(bridgehub), address(sharedBridge), usdc);
         usdcAssetId = deploymentTracker.USDC_ASSET_ID();
         l1AssetHandler = new L1UsdcAssetHandler(address(sharedBridge), usdcAssetId);
     }

@@ -6,6 +6,7 @@ import {IAssetHandler} from "l1-contracts/contracts/bridge/interfaces/IAssetHand
 import {AddressAliasHelper} from "l1-contracts/contracts/vendor/AddressAliasHelper.sol";
 import {Unauthorized} from "l1-contracts/contracts/common/L1ContractErrors.sol";
 
+import {L2_ASSET_ROUTER_ADDR} from "l1-contracts/contracts/common/L2ContractAddresses.sol"; 
 import {UsdcAssetHandlerBase} from "./UsdcAssetHandlerBase.sol";
 
 /// @author Matter Labs
@@ -19,11 +20,9 @@ contract L2UsdcAssetHandler is IAssetHandler, UsdcAssetHandlerBase {
     /// @dev Contract is expected to be used as proxy implementation.
     /// @dev Disable the initialization to prevent Parity hack.
     constructor(
-        address _assetRouter,
         bytes32 _usdcAssetId,
         uint256 _l1ChainId
-    ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId) {
-        _disableInitializers();
+    ) UsdcAssetHandlerBase(L2_ASSET_ROUTER_ADDR, _usdcAssetId) {
         L1_CHAIN_ID = _l1ChainId;
     }
 
@@ -34,8 +33,8 @@ contract L2UsdcAssetHandler is IAssetHandler, UsdcAssetHandlerBase {
         _;
     }
 
-    function setTokenAddress(address _tokenAddress) external onlyAliasedAssetDeploymentTracker {
-        _setTokenAddress(_tokenAddress);
+    function setTokenAddress(address _tokenAddress, bool _isNative) external onlyAliasedAssetDeploymentTracker {
+        _setTokenAddress(_tokenAddress, _isNative);
     }
 
 

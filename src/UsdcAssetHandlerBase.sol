@@ -12,8 +12,6 @@ import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAsse
 import {Unauthorized, NonEmptyMsgValue, TokensWithFeesNotSupported} from "l1-contracts/contracts/common/L1ContractErrors.sol";
 
 import {IMintableToken} from "./IMintableToken.sol";
-import {AssetHandlerNotSet} from "./Errors.sol";
-// import {TokensWithFeesNotSupported} from "l1-contracts/contracts/bridge/L1BridgeContractErrors.sol";
 
 /// @author Matter Labs
 /// @custom:security-contact security@matterlabs.dev
@@ -66,8 +64,9 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         USDC_ASSET_ID = _usdcAssetId;
     }
 
-    function _setTokenAddress(address _tokenAddress) internal {
+    function _setTokenAddress(address _tokenAddress, bool _isNative) internal {
         tokenAddress = _tokenAddress;
+        isNative = _isNative;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -143,17 +142,19 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
     /// @param _amount The amount to be transferred.
     /// @return The difference between the contract balance before and after the transferring of funds.
     function _depositFunds(address _from, IERC20 _token, uint256 _amount) internal virtual returns (uint256) {
-        uint256 balanceBefore = _token.balanceOf(address(this));
+        uint256 difference;
         // slither-disable-next-line arbitrary-send-erc20
         if (isNative) {
-            IERC20(_token).safeTransferFrom(_from, address(this), _amount);
+            uint256 balanceBefore = _token.balanceOf(address(this));
+            _token.safeTransferFrom(_from, address(this), _amount);
+            uint256 balanceAfter = _token.balanceOf(address(this));
+            difference = balanceAfter - balanceBefore;
         } else {
             IMintableToken(tokenAddress).mint(_from, _amount);
+            difference = _amount;
         }
 
-        uint256 balanceAfter = _token.balanceOf(address(this));
-
-        return balanceAfter - balanceBefore;
+        return difference;
     }
 
     function _withdrawFunds(address _to, address _token, uint256 _amount) internal {

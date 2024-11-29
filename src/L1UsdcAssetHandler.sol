@@ -37,7 +37,6 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         address _assetRouter,
         bytes32 _usdcAssetId
     ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId) {
-        _disableInitializers();
     }
 
     modifier onlyAssetDeploymentTracker() {
@@ -47,8 +46,8 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         _;
     }
 
-    function setTokenAddress(address _tokenAddress) external onlyAssetDeploymentTracker {
-        _setTokenAddress(_tokenAddress);
+    function setTokenAddress(address _tokenAddress, bool _isNative) external onlyAssetDeploymentTracker {
+        _setTokenAddress(_tokenAddress, _isNative);
     }
 
     /*//////////////////////////////////////////////////////////////

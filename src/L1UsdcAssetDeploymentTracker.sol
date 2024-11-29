@@ -9,10 +9,9 @@ import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAsse
 import {DataEncoding} from "l1-contracts/contracts/common/libraries/DataEncoding.sol";
 import {IBridgehub, L2TransactionRequestTwoBridgesInner} from "l1-contracts/contracts/bridgehub/IBridgehub.sol";
 
-// import { } from "l1-contracts/contracts/bridge/L1BridgeContractErrors.sol";
+import { UnsupportedEncodingVersion} from "l1-contracts/contracts/common/L1ContractErrors.sol";
 import {NoEthAllowed, WrongCounterPart, NotOwner, NoEthAllowed, OnlyBridgehub} from "l1-contracts/contracts/bridgehub/L1BridgehubErrors.sol";
 import {TWO_BRIDGES_MAGIC_VALUE} from "l1-contracts/contracts/common/Config.sol";
-import {L2_BRIDGEHUB_ADDR} from "l1-contracts/contracts/common/L2ContractAddresses.sol";
 
 import {IUsdcAssetHandlerBase} from "./IUsdcAssetHandlerBase.sol";
 import {AssetHandlerNotSet} from "./Errors.sol";
@@ -33,13 +32,13 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
 
     address public immutable L1_USDC_ADDRESS;
 
-    bytes32 public immutable USDC_ASSET_ID;
+    bytes32 public usdcAssetId;
 
-    address public l1AssetHandler; // To be deployed at predefined address
+    address public l1AssetHandler;
 
     address public assetHandlerOnCounterpart; // To be deployed at predefined address
 
-    address public l2UsdcAddress;
+    address public l2UsdcAddress; // To be deployed at predefined address
 
     mapping(uint256 chainId => address l2UsdcAddress) public chainL2UsdcAddress;
 
@@ -51,15 +50,14 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
         _;
     }
 
-    constructor(address _bridgehub, address _assetRouter, address _usdcToken, address _assetHandlerOnCounterpart) {
-        _disableInitializers();
+    constructor(address _bridgehub, address _assetRouter, address _usdcToken) {
         BRIDGE_HUB = IBridgehub(_bridgehub);
         ASSET_ROUTER = IAssetRouterBase(_assetRouter);
         L1_USDC_ADDRESS = _usdcToken;
-        USDC_ASSET_ID = DataEncoding.encodeAssetId(block.chainid, L1_USDC_ADDRESS, address(this));
     }
 
     function setAddresses(address _l1AssetHandler, address _assetHandlerOnCounterpart) external onlyOwner {
+        usdcAssetId = DataEncoding.encodeAssetId(block.chainid, L1_USDC_ADDRESS, address(this));
         l1AssetHandler = _l1AssetHandler;
         assetHandlerOnCounterpart = _assetHandlerOnCounterpart;
     }
@@ -68,11 +66,15 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
         chainL2UsdcAddress[_chainId] = _l2UsdcAddress;
     }
 
+    function setCreate2L2UsdcAddress(address _l2UsdcAddress) external onlyOwner {
+        l2UsdcAddress = _l2UsdcAddress;
+    }
+
     /// @notice Registers a native token address for the vault.
     /// @dev It does not perform any checks for the correctnesss of the token contract.
     function registerTokenOnL1() external {
         ASSET_ROUTER.setAssetHandlerAddressThisChain(bytes32(uint256(uint160(L1_USDC_ADDRESS))), l1AssetHandler);
-        IUsdcAssetHandlerBase(l1AssetHandler).setTokenAddress(L1_USDC_ADDRESS);
+        IUsdcAssetHandlerBase(l1AssetHandler).setTokenAddress(L1_USDC_ADDRESS, true);
     }
 
     /// @notice The function responsible for registering the L2 tokenAddress on the L2AssetHandler.
@@ -93,7 +95,7 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
         uint256 _chainId,
         address _originalCaller,
         uint256,
-        bytes calldata
+        bytes calldata _data
     ) external payable onlyBridgehub returns (L2TransactionRequestTwoBridgesInner memory request) {
         if (msg.value != 0) {
             revert NoEthAllowed();
@@ -102,10 +104,14 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
         if (_originalCaller != owner()) {
             revert NotOwner(_originalCaller, owner());
         }
+        bytes1 encodingVersion = _data[0];
+        if (encodingVersion != USDC_DEPLOYMENT_TRACKER_ENCODING_VERSION) {
+            revert UnsupportedEncodingVersion();
+        }
 
-        address registeredL2UsdcAddress = chainL2UsdcAddress[_chainId];
-        address token = registeredL2UsdcAddress != address(0) ? registeredL2UsdcAddress : l2UsdcAddress;
-        request = _registerTokenAddressOnL2AssetHandler(_chainId, token);
+        bool _isNative = abi.decode(_data[1:], (bool));
+
+        request = _registerTokenAddressOnL2AssetHandler(_chainId, _isNative);
     }
 
     /// @notice The function called by the Bridgehub after the L2 transaction has been initiated.
@@ -129,11 +135,13 @@ contract L1UsdcAssetDeploymentTracker is IL1AssetDeploymentTracker, Ownable2Step
     function _registerTokenAddressOnL2AssetHandler(
         // solhint-disable-next-line no-unused-vars
         uint256 _chainId,
-        address _tokenAddress
+        bool _isNative
     ) internal view returns (L2TransactionRequestTwoBridgesInner memory request) {
+        address registeredL2UsdcAddress = chainL2UsdcAddress[_chainId];
+        address token = registeredL2UsdcAddress != address(0) ? registeredL2UsdcAddress : l2UsdcAddress;
         bytes memory l2TxCalldata = abi.encodeCall(
             IUsdcAssetHandlerBase.setTokenAddress,
-            (_tokenAddress)
+            (token, _isNative)
         );
 
         if (assetHandlerOnCounterpart == address(0)) {
