@@ -6,7 +6,7 @@ import {IERC20} from "@openzeppelin/contracts-v4/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v4/token/ERC20/utils/SafeERC20.sol";
 
 import {IL1AssetHandler} from "l1-contracts/contracts/bridge/interfaces/IL1AssetHandler.sol";
-import {AssetIdNotSupported, InsufficientChainBalance, NoFundsTransferred} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+import {AssetIdNotSupported, InsufficientChainBalance, NoFundsTransferred, Unauthorized} from "l1-contracts/contracts/common/L1ContractErrors.sol";
 
 import {UsdcAssetHandlerBase} from "./UsdcAssetHandlerBase.sol";
 
@@ -35,11 +35,20 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
     /// @param _assetRouter Address of assetRouter
     constructor(
         address _assetRouter,
-        address _usdcToken,
         bytes32 _usdcAssetId
     ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId) {
         _disableInitializers();
-        TOKEN_ADDRESS = _usdcToken;
+    }
+
+    modifier onlyAssetDeploymentTracker() {
+        if (msg.sender != L1_ASSET_DEPLOYMENT_TRACKER) {
+            revert Unauthorized(msg.sender);
+        }
+        _;
+    }
+
+    function setTokenAddress(address _tokenAddress) external onlyAssetDeploymentTracker {
+        _setTokenAddress(_tokenAddress);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -56,7 +65,7 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         if (_assetId != USDC_ASSET_ID) {
             revert AssetIdNotSupported(_assetId);
         }
-        (uint256 _amount, ) = abi.decode(_data, (uint256, address)); // replace with decodeBridgeMintData
+        (,,uint256 _amount ) = _decodeBridgeMintData(_data); //(_data, (uint256, address)); // replace with decodeBridgeMintData
         if (_amount == 0) {
             revert NoFundsTransferred();
         }
@@ -64,7 +73,7 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         _handleChainBalanceDecrease(_chainId, _amount);
 
         // we know USDC is native on L1.
-        IERC20(TOKEN_ADDRESS).safeTransfer(_depositSender, _amount);
+        IERC20(tokenAddress).safeTransfer(_depositSender, _amount);
     }
 
     /*//////////////////////////////////////////////////////////////

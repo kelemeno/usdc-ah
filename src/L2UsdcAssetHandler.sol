@@ -3,6 +3,9 @@
 pragma solidity 0.8.24;
 
 import {IAssetHandler} from "l1-contracts/contracts/bridge/interfaces/IAssetHandler.sol";
+import {AddressAliasHelper} from "l1-contracts/contracts/vendor/AddressAliasHelper.sol";
+import {Unauthorized} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+
 import {UsdcAssetHandlerBase} from "./UsdcAssetHandlerBase.sol";
 
 /// @author Matter Labs
@@ -23,6 +26,18 @@ contract L2UsdcAssetHandler is IAssetHandler, UsdcAssetHandlerBase {
         _disableInitializers();
         L1_CHAIN_ID = _l1ChainId;
     }
+
+    modifier onlyAliasedAssetDeploymentTracker() {
+        if (AddressAliasHelper.undoL1ToL2Alias(msg.sender) != L1_ASSET_DEPLOYMENT_TRACKER) {
+            revert Unauthorized(msg.sender);
+        }
+        _;
+    }
+
+    function setTokenAddress(address _tokenAddress) external onlyAliasedAssetDeploymentTracker {
+        _setTokenAddress(_tokenAddress);
+    }
+
 
     function _handleChainBalanceIncrease(uint256 _chainId, uint256 _amount) internal override {}
 

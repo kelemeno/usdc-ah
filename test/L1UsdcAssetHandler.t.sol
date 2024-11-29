@@ -71,9 +71,9 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
         // usdc = new FiatTokenV2_2();
         usdc = tokens[0];
         address l2AssetHandler = makeAddr(string(abi.encode("l2AssetHandler")));
-        deploymentTracker = new L1UsdcAssetDeploymentTracker(address(sharedBridge), usdc, l2AssetHandler);
+        deploymentTracker = new L1UsdcAssetDeploymentTracker(address(bridgehub), address(sharedBridge), usdc, l2AssetHandler);
         usdcAssetId = deploymentTracker.USDC_ASSET_ID();
-        l1AssetHandler = new L1UsdcAssetHandler(address(sharedBridge), usdc, usdcAssetId);
+        l1AssetHandler = new L1UsdcAssetHandler(address(sharedBridge), usdcAssetId);
     }
 
     function depositToL1(address _tokenAddress) public {

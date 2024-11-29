@@ -8,10 +8,11 @@ import {IERC20} from "@openzeppelin/contracts-v4/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts-v4/token/ERC20/utils/SafeERC20.sol";
 
 import {IAssetHandler} from "l1-contracts/contracts/bridge/interfaces/IAssetHandler.sol";
-import {IMintableToken} from "./IMintableToken.sol";
 import {IAssetRouterBase} from "l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
-
 import {Unauthorized, NonEmptyMsgValue, TokensWithFeesNotSupported} from "l1-contracts/contracts/common/L1ContractErrors.sol";
+
+import {IMintableToken} from "./IMintableToken.sol";
+import {AssetHandlerNotSet} from "./Errors.sol";
 // import {TokensWithFeesNotSupported} from "l1-contracts/contracts/bridge/L1BridgeContractErrors.sol";
 
 /// @author Matter Labs
@@ -27,8 +28,10 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
     /// @dev The assetId of the base token.
     bytes32 public immutable USDC_ASSET_ID;
 
-    /// @dev A mapping tokenAddress
-    address public immutable TOKEN_ADDRESS;
+    address public immutable L1_ASSET_DEPLOYMENT_TRACKER;
+
+    /// @dev A tokenAddress
+    address public tokenAddress;
 
     bool public isNative;
 
@@ -57,11 +60,14 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
     /// @dev Contract is expected to be used as proxy implementation.
     /// @dev Disable the initialization to prevent Parity hack.
     /// @param _assetRouter Address of assetRouter
-    constructor(address _assetRouter, bytes32 _usdcAssetId, address _tokenAddress) {
+    constructor(address _assetRouter, bytes32 _usdcAssetId) {
         _disableInitializers();
         ASSET_ROUTER = IAssetRouterBase(_assetRouter);
         USDC_ASSET_ID = _usdcAssetId;
-        TOKEN_ADDRESS = _tokenAddress;
+    }
+
+    function _setTokenAddress(address _tokenAddress) internal {
+        tokenAddress = _tokenAddress;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -86,7 +92,7 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         (, receiver, amount) = _decodeBridgeMintData(_data);
 
         _handleChainBalanceDecrease(_chainId, amount);
-        _withdrawFunds(receiver, TOKEN_ADDRESS, amount);
+        _withdrawFunds(receiver, tokenAddress, amount);
         // solhint-disable-next-line func-named-parameters
         emit BridgeMint(_chainId, _assetId, receiver, amount);
     }
@@ -106,7 +112,7 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         bytes calldata _data
     ) external payable override nonpayableForced onlyAssetRouter whenNotPaused returns (bytes memory _bridgeMintData) {
         (uint256 _depositAmount, address _receiver) = _decodeBridgeBurnData(_data);
-        uint256 expectedDepositAmount = _depositFunds(_originalCaller, IERC20(TOKEN_ADDRESS), _depositAmount); // note if _originalCaller is this contract, this will return 0. This does not happen.
+        uint256 expectedDepositAmount = _depositFunds(_originalCaller, IERC20(tokenAddress), _depositAmount); // note if _originalCaller is this contract, this will return 0. This does not happen.
         _handleChainBalanceIncrease(_chainId, _depositAmount);
         // The token has non-standard transfer logic
         if (_depositAmount != expectedDepositAmount) {
@@ -142,7 +148,7 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         if (isNative) {
             IERC20(_token).safeTransferFrom(_from, address(this), _amount);
         } else {
-            IMintableToken(TOKEN_ADDRESS).mint(_from, _amount);
+            IMintableToken(tokenAddress).mint(_from, _amount);
         }
 
         uint256 balanceAfter = _token.balanceOf(address(this));
@@ -175,7 +181,7 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         return abi.decode(_data, (address, address, uint256));
     }
 
-    function _decodeBridgeBurnData(bytes calldata _data) internal pure returns (address, uint256) {
-        return abi.decode(_data, (address, uint256));
+    function _decodeBridgeBurnData(bytes calldata _data) internal pure returns (uint256, address) {
+        return abi.decode(_data, (uint256, address));
     }
 }
