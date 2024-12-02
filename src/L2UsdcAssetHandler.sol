@@ -21,8 +21,9 @@ contract L2UsdcAssetHandler is IAssetHandler, UsdcAssetHandlerBase {
     /// @dev Disable the initialization to prevent Parity hack.
     constructor(
         bytes32 _usdcAssetId,
-        uint256 _l1ChainId
-    ) UsdcAssetHandlerBase(L2_ASSET_ROUTER_ADDR, _usdcAssetId) {
+        uint256 _l1ChainId,
+        address _l1AssetDeploymentTracker
+    ) UsdcAssetHandlerBase(L2_ASSET_ROUTER_ADDR, _usdcAssetId, _l1AssetDeploymentTracker) {
         L1_CHAIN_ID = _l1ChainId;
     }
 

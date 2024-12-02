@@ -58,10 +58,11 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
     /// @dev Contract is expected to be used as proxy implementation.
     /// @dev Disable the initialization to prevent Parity hack.
     /// @param _assetRouter Address of assetRouter
-    constructor(address _assetRouter, bytes32 _usdcAssetId) {
+    constructor(address _assetRouter, bytes32 _usdcAssetId, address _l1AssetDeploymentTracker) {
         _disableInitializers();
         ASSET_ROUTER = IAssetRouterBase(_assetRouter);
         USDC_ASSET_ID = _usdcAssetId;
+        L1_ASSET_DEPLOYMENT_TRACKER = _l1AssetDeploymentTracker;
     }
 
     function _setTokenAddress(address _tokenAddress, bool _isNative) internal {

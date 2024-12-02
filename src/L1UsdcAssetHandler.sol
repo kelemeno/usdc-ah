@@ -35,8 +35,9 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
     /// @param _assetRouter Address of assetRouter
     constructor(
         address _assetRouter,
-        bytes32 _usdcAssetId
-    ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId) {
+        bytes32 _usdcAssetId,
+        address _l1AssetDeploymentTracker
+    ) UsdcAssetHandlerBase(_assetRouter, _usdcAssetId, _l1AssetDeploymentTracker) {
     }
 
     modifier onlyAssetDeploymentTracker() {
