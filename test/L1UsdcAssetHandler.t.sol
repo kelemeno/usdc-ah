@@ -16,7 +16,7 @@ import {BridgeHelper} from "lib/era-contracts/l1-contracts/contracts/bridge/Brid
 import {ETH_TOKEN_ADDRESS} from "lib/era-contracts/l1-contracts/contracts/common/Config.sol";
 import {L2_ASSET_ROUTER_ADDR} from "lib/era-contracts/l1-contracts/contracts/common/L2ContractAddresses.sol";
 import {IAssetRouterBase} from "lib/era-contracts/l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
-import {IBridgehub} from "lib/era-contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
+import {IBridgehub, L2TransactionRequestDirect} from "lib/era-contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 import {L2TransactionRequestDirect} from "lib/era-contracts/l1-contracts/contracts/bridgehub/IBridgehub.sol";
 import {NEW_ENCODING_VERSION} from "lib/era-contracts/l1-contracts/contracts/bridge/asset-router/IAssetRouterBase.sol";
 import {IERC20} from "@openzeppelin/contracts-v4/token/ERC20/IERC20.sol";
@@ -56,6 +56,7 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
     function prepare() public {
         _generateUserAddresses();
 
+        _setConfig();
         _deployL1Contracts();
         _deployTokens();
         _registerNewTokens(tokens);
@@ -74,6 +75,19 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
 
             _addL2ChainContract(zkChainIds[i], contractAddress);
         }
+    }
+
+    function _setConfig() internal override {
+        vm.setEnv("L1_CONFIG", "/test/foundry/l1/integration/deploy-scripts/script-config/config-deploy-l1.toml");
+        vm.setEnv("L1_OUTPUT", "/test/foundry/l1/integration/deploy-scripts/script-out/output-deploy-l1.toml");
+        vm.setEnv(
+            "ZK_CHAIN_CONFIG",
+            "/test/foundry/l1/integration/deploy-scripts/script-config/config-deploy-zk-chain-era.toml"
+        );
+        vm.setEnv(
+            "ZK_CHAIN_OUT",
+            "/test/foundry/l1/integration/deploy-scripts/script-out/output-deploy-zk-chain-era.toml"
+        );
     }
 
     function setUp() public {
@@ -221,4 +235,26 @@ contract L1UsdcAssetHandlerTest is Test, L1ContractDeployer, ZKChainDeployer, To
         });
         vm.stopBroadcast();
     }
+
+    function test_assetDeploymentTracker_setL2UsdcAddress() public {
+        vm.prank(deploymentTracker.owner());
+        deploymentTracker.setL2UsdcAddress(1, l2UsdcAddress, false);
+    }
+
+    function test_assetDeploymentTracker_bridgehubDeposit() public {
+        bridgehub.requestL2TransactionTwoBridges{value: 250000000000100}(
+            L2TransactionRequestTwoBridgesOuter({
+                chainId: eraZKChainId,
+                mintValue: 250000000000100,
+                l2Value: 0,
+                l2GasLimit: 1000000,
+                l2GasPerPubdataByteLimit: REQUIRED_L2_GAS_PRICE_PER_PUBDATA,
+                refundRecipient: address(0),
+                secondBridgeAddress: address(deploymentTracker),
+                secondBridgeValue: 0,
+                secondBridgeCalldata: abi.encode(usdcAssetId, abi.encode(uint256(100), address(this)))
+            })
+        );
+    }
+
 }

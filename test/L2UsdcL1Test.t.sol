@@ -35,7 +35,11 @@ import {L2UsdcTestAbstract} from "./L2UsdcAbstract.t.sol";
 import {SharedL2ContractL1DeployerUtils, DeployUtils} from "lib/era-contracts/l1-contracts/test/foundry/l1/integration/l2-tests-in-l1-context/_SharedL2ContractL1DeployerUtils.sol";
 
 contract L2UsdcL1Test is Test, SharedL2ContractL1DeployerUtils, SharedL2ContractDeployer, L2UsdcTestAbstract {
-    function setUp() public override(L2UsdcTestAbstract, SharedL2ContractDeployer) {}
+    function setUp() public override(SharedL2ContractDeployer) {
+        super.setUp();
+        deployTokens();
+        deployL2UsdcAssetHandler();
+    }
 
     function test() internal virtual override(DeployUtils, SharedL2ContractL1DeployerUtils) {}
 
