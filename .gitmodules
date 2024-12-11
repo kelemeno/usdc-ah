@@ -1,0 +1,10 @@
+[submodule "lib/usdc-token"]
+	path = lib/usdc-token
+	url = https://github.com/circlefin/stablecoin-evm/
+[submodule "lib/era-contracts"]
+	path = lib/era-contracts
+	branch = kl/usdc-ah-import
+	url = https://github.com/matter-labs/era-contracts-private.git
+[submodule "lib/forge-std"]
+	path = lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
