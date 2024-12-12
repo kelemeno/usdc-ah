@@ -1,0 +1,22 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+remappings = [
+    "@openzeppelin/contracts-v4/=lib/era-contracts/l1-contracts/node_modules/@openzeppelin/contracts-v4/",
+    "@openzeppelin/contracts-upgradeable-v4/=lib/era-contracts/l1-contracts/node_modules/@openzeppelin/contracts-upgradeable-v4/",
+    "ds-test/=lib/usdc-token/lib/forge-std/lib/ds-test/src/",
+    # "forge-std/=lib/usdc-token/lib/forge-std/src/",
+    "usdc-token/=lib/usdc-token/",
+    "l1-contracts/=lib/era-contracts/l1-contracts/",
+]
+
+fs_permissions = [
+    { access = "read", path = "lib/era-contracts/" },
+    { access = "read", path = "lib/usdc-token/" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/script-out/" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/test/foundry/l1/integration/deploy-scripts/script-config" },
+    { access = "read-write", path = "lib/era-contracts/l1-contracts/test/foundry/l1/integration/deploy-scripts/script-out/" },
+]
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
