@@ -179,8 +179,8 @@ abstract contract UsdcAssetHandlerBase is IAssetHandler, PausableUpgradeable {
         return abi.encode(_originalCaller, _remoteReceiver, _amount);
     }
 
-    function _decodeBridgeMintData(bytes calldata _data) internal pure returns (address, address, uint256) {
-        return abi.decode(_data, (address, address, uint256));
+    function _decodeBridgeMintData(bytes calldata _data) internal pure returns (address, uint256) {
+        return abi.decode(_data, (address, uint256));
     }
 
     function _decodeBridgeBurnData(bytes calldata _data) internal pure returns (uint256, address) {

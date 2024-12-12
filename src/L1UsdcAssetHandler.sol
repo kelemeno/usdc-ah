@@ -51,6 +51,13 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         _setTokenAddress(_tokenAddress, _isNative);
     }
 
+
+    function setChainBalance(uint256 _chainId, uint256 _balance) external onlyAssetDeploymentTracker {
+        chainBalance[_chainId] = _balance;
+    }
+
+
+
     /*//////////////////////////////////////////////////////////////
                             L1 SPECIFIC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
@@ -65,7 +72,7 @@ contract L1UsdcAssetHandler is IL1AssetHandler, UsdcAssetHandlerBase {
         if (_assetId != USDC_ASSET_ID) {
             revert AssetIdNotSupported(_assetId);
         }
-        (,,uint256 _amount ) = _decodeBridgeMintData(_data); //(_data, (uint256, address)); // replace with decodeBridgeMintData
+        (,uint256 _amount ) = _decodeBridgeMintData(_data); //(_data, (uint256, address)); // replace with decodeBridgeMintData
         if (_amount == 0) {
             revert NoFundsTransferred();
         }
